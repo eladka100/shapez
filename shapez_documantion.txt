@@ -1,0 +1,194 @@
+square_size: 10*10 px
+board: 20*25
+
+toolbar:
+	1: pipe1
+	2: pipe2
+	3: rotator
+	4: trash
+	5: cutter
+	6: shuffler
+	7: painter
+	8: stacker
+
+brick format:
+	0-2: brick type
+	(2) - brick size
+	3: flip horizontaly
+	4: flip verticaly
+	5: vertical/horizontal
+	6: greynes
+
+tile format:
+	0-7: brick
+	8: is connected tile
+	9-10: input
+	11-12: output
+	13: output exists
+	14-15: capacity 
+
+corner format:
+	0-1: shape
+	2: color
+
+layer format:
+	0-2: top left corner
+	3-5: top right corner
+	6-8: bottom left corner
+	9-11: bottom right corner
+
+shape format:
+	0-11: bottom layer
+	12-23: top layer
+	
+
+layer format
+read_mouse:
+	input: nothing
+	output: cx - mouse X pos, dx - mouse Y position, bx - button press
+
+mousing:
+	input: al - color
+	output: mouseX - mouse X pixlated position, mouseY - mouse Y pixlated position, bx - button press
+
+
+squere:
+00h, 00h, 00h, 00h, 00h, 
+00h, 07h, 07h, 07h, 07h, 
+00h, 07h, 07h, 07h, 07h, 
+00h, 07h, 07h, 07h, 07h,  
+00h, 07h, 07h, 07h, 00h, 
+
+tiny squere:
+00h, 00h, 00h, 
+00h, 07h, 07h, 
+00h, 07h, 07h, 
+
+
+clover:
+0fh, 00h, 00h, 00h, 0fh, 
+00h, 07h, 07h, 07h, 00h, 
+00h, 07h, 07h, 07h, 07h, 
+00h, 07h, 07h, 07h, 07h, 
+0fh, 00h, 07h, 07h, 00h, 
+
+tiny clover:
+0fh, 00h, 0fh, 
+00h, 07h, 00h, 
+0fh, 00h, 0fh, 
+
+
+star:
+00h, 00h, 0fh, 0fh, 0fh, 
+00h, 07h, 00h, 00h, 0fh, 
+0fh, 00h, 07h, 07h, 00h, 
+0fh, 00h, 07h, 07h, 07h, 
+0fh, 0fh, 00h, 07h, 00h, 
+
+tiny star:
+00h, 00h, 0fh, 
+00h, 07h, 00h, 
+0fh, 00h, 0fh, 
+pipe:
+07h, 07h, 0fh, 0fh, 07h, 07h, 0fh, 0fh, 07h, 07h, 
+07h, 07h, 0fh, 07h, 07h, 07h, 07h, 0fh, 07h, 07h, 
+07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 07h, 07h, 
+07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 07h, 07h, 
+07h, 07h, 0fh, 0fh, 07h, 07h, 0fh, 0fh, 07h, 07h, 
+07h, 07h, 0fh, 07h, 07h, 07h, 07h, 0fh, 07h, 07h, 
+07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 07h, 07h, 
+07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 07h, 07h, 
+07h, 07h, 0fh, 0fh, 07h, 07h, 0fh, 0fh, 07h, 07h, 
+07h, 07h, 0fh, 07h, 07h, 07h, 07h, 0fh, 07h, 07h, 
+
+
+turnning pipe:
+07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 
+07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 
+07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 
+07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 07h, 0fh, 
+07h, 07h, 0fh, 0fh, 07h, 07h, 07h, 0fh, 07h, 07h, 
+07h, 07h, 0fh, 0fh, 0fh, 07h, 07h, 0fh, 07h, 07h,
+07h, 07h, 0fh, 0fh, 0fh, 0fh, 07h, 0fh, 07h, 0fh, 
+07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 
+07h, 07h, 0fh, 0fh, 07h, 07h, 0fh, 0fh, 07h, 07h, 
+07h, 07h, 0fh, 07h, 07h, 07h, 07h, 0fh, 07h, 07h, 
+
+
+cutter:
+0ch, 0ch, 0ch, 00h, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 00h, 0ch, 0ch, 0ch, 
+0ch, 0ch, 00h, 00h, 00h, 0ch, 0ch, 00h, 0ch, 0ch, 0ch, 0ch, 00h, 0ch, 0ch, 00h, 00h, 00h, 0ch, 0ch, 
+0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 00h, 0ch, 0ch, 0ch, 0ch, 00h, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 
+0ch, 0ch, 0ch, 00h, 0ch, 0ch, 0ch, 0ch, 00h, 0ch, 0ch, 00h, 0ch, 0ch, 0ch, 0ch, 00h, 0ch, 0ch, 0ch, 
+0ch, 0ch, 0ch, 00h, 00h, 00h, 0ch, 0ch, 0ch, 00h, 00h, 0ch, 0ch, 0ch, 00h, 00h, 00h, 0ch, 0ch, 0ch, 
+0ch, 0ch, 0ch, 00h, 0ch, 0ch, 0ch, 0ch, 0ch, 00h, 00h, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 
+0ch, 0ch, 0ch, 00h, 0ch, 0ch, 0ch, 00h, 00h, 0ch, 0ch, 00h, 00h, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 
+0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 00h, 0ch, 00h, 0ch, 0ch, 00h, 0ch, 00h, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 
+0ch, 0ch, 0ch, 00h, 0ch, 0ch, 0ch, 00h, 0ch, 0ch, 0ch, 0ch, 00h, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 
+0ch, 0ch, 00h, 00h, 00h, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 0ch, 
+
+
+shuffler:
+00h, 00h, 07h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 07h, 00h, 00h, 
+00h, 00h, 07h, 07h, 07h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 07h, 07h, 07h, 00h, 00h, 
+00h, 00h, 00h, 00h, 00h, 07h, 07h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 07h, 00h, 00h, 00h, 00h, 00h, 
+00h, 00h, 00h, 00h, 00h, 00h, 00h, 07h, 00h, 00h, 00h, 00h, 07h, 07h, 00h, 00h, 00h, 00h, 00h, 00h, 
+00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 07h, 07h, 07h, 07h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 
+00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 07h, 07h, 07h, 07h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 
+00h, 00h, 00h, 00h, 00h, 00h, 00h, 07h, 00h, 00h, 00h, 00h, 07h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 
+00h, 00h, 00h, 00h, 00h, 07h, 07h, 00h, 00h, 00h, 00h, 00h, 00h, 07h, 07h, 00h, 00h, 00h, 00h, 00h, 
+00h, 00h, 00h, 00h, 07h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 07h, 00h, 00h, 00h, 00h, 
+00h, 00h, 07h, 07h, 07h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 00h, 07h, 07h, 07h, 00h, 00h, 
+
+
+rotator:
+0ah, 0ah, 0ah, 0ah, 0fh, 0fh, 0ah, 0ah, 0ah, 0ah, 
+0ah, 0ah, 0ah, 0ah, 0ah, 0ah, 0ah, 0ah, 0ah, 0ah, 
+0ah, 0ah, 09h, 0ah, 0ah, 0ah, 09h, 09h, 0ah, 0ah, 
+0ah, 0ah, 09h, 09h, 0ah, 0ah, 09h, 0ah, 0ah, 0ah, 
+0ah, 0ah, 0ah, 0ah, 09h, 09h, 0ah, 0ah, 0ah, 0ah, 
+0ah, 0ah, 0ah, 0ah, 09h, 09h, 0ah, 0ah, 0ah, 0ah, 
+0ah, 0ah, 0ah, 09h, 0ah, 0ah, 09h, 09h, 0ah, 0ah, 
+0ah, 0ah, 09h, 09h, 0ah, 0ah, 0ah, 09h, 0ah, 0ah, 
+0ah, 0ah, 0ah, 0ah, 0fh, 0fh, 0ah, 0ah, 0ah, 0ah, 
+0ah, 0ah, 0ah, 0fh, 0ah, 0ah, 0fh, 0ah, 0ah, 0ah, 
+
+
+painter:
+0dh, 0dh, 0dh, 00h, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 
+0dh, 0dh, 00h, 00h, 00h, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 
+0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 00h, 00h, 0fh, 0fh, 0fh, 0fh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 
+0dh, 0dh, 0dh, 00h, 0dh, 0dh, 0dh, 00h, 00h, 00h, 0fh, 00h, 0fh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 
+0dh, 0dh, 0dh, 00h, 00h, 00h, 0dh, 00h, 00h, 00h, 0fh, 0fh, 0fh, 0dh, 00h, 00h, 00h, 0dh, 0dh, 0dh, 
+0dh, 0dh, 0dh, 00h, 0dh, 0dh, 0dh, 00h, 00h, 00h, 0fh, 0fh, 0fh, 0dh, 0dh, 0dh, 00h, 0dh, 0dh, 0dh, 
+0dh, 0dh, 0dh, 00h, 0dh, 0dh, 0dh, 00h, 0fh, 00h, 0fh, 0fh, 0fh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 
+0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 00h, 00h, 00h, 00h, 0fh, 0fh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 
+0dh, 0dh, 0dh, 00h, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 00h, 0dh, 0dh, 0dh, 
+0dh, 0dh, 00h, 00h, 00h, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 0dh, 00h, 00h, 00h, 0dh, 0dh, 
+
+
+stacker:
+01h, 01h, 01h, 00h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 
+01h, 01h, 00h, 00h, 00h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 
+01h, 01h, 01h, 01h, 01h, 01h, 01h, 00h, 00h, 00h, 00h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 
+01h, 01h, 01h, 00h, 01h, 01h, 01h, 00h, 00h, 00h, 01h, 01h, 00h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 
+01h, 01h, 01h, 00h, 00h, 00h, 01h, 00h, 01h, 01h, 00h, 00h, 00h, 01h, 00h, 00h, 00h, 01h, 01h, 01h, 
+01h, 01h, 01h, 00h, 01h, 01h, 01h, 00h, 00h, 01h, 01h, 00h, 00h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 
+01h, 01h, 01h, 00h, 01h, 01h, 01h, 01h, 01h, 00h, 00h, 00h, 00h, 01h, 01h, 01h, 00h, 01h, 01h, 01h, 
+01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 00h, 00h, 00h, 00h, 00h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 
+01h, 01h, 01h, 00h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 00h, 01h, 01h, 01h, 
+01h, 01h, 00h, 00h, 00h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 01h, 00h, 00h, 00h, 01h, 01h, 
+
+
+
+trash:
+04h, 04h, 00h, 00h, 00h, 00h, 00h, 00h, 04h, 04h, 
+04h, 04h, 04h, 00h, 00h, 00h, 00h, 04h, 04h, 04h, 
+00h, 04h, 04h, 04h, 00h, 00h, 04h, 04h, 04h, 00h, 
+00h, 00h, 04h, 04h, 04h, 04h, 04h, 04h, 00h, 00h, 
+00h, 00h, 00h, 04h, 04h, 04h, 04h, 00h, 00h, 00h, 
+00h, 00h, 00h, 04h, 04h, 04h, 04h, 00h, 00h, 00h, 
+00h, 00h, 04h, 04h, 04h, 04h, 04h, 04h, 00h, 00h, 
+00h, 04h, 04h, 04h, 00h, 00h, 04h, 04h, 04h, 00h, 
+04h, 04h, 04h, 00h, 00h, 00h, 00h, 04h, 04h, 04h, 
+04h, 04h, 00h, 00h, 00h, 00h, 00h, 00h, 04h, 04h, 		
