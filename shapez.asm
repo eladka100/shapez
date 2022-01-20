@@ -29,6 +29,14 @@ inout_pipe2 db 01110b, 00110b, 01100b, 00100b, 11010b, 10010b, 11000b, 10000b
 inout_func dw offset strait, offset turned, offset strait, offset EX, offset only_output, offset strait, offset only_input, offset only_input
 
 board dw 500 dup(0040h)
+dynamic_board db 1500 dup(00h)
+
+squere db 00h, 00h, 00h, 00h, 00h, 00h, 07h, 07h, 07h, 07h, 00h, 07h, 07h, 07h, 07h, 00h, 07h, 07h, 07h, 07h,  00h, 07h, 07h, 07h, 00h
+tiny_squere db 00h, 00h, 00h, 00h, 07h, 07h, 00h, 07h, 07h
+clover db 0fh, 00h, 00h, 00h, 0fh, 00h, 07h, 07h, 07h, 00h, 00h, 07h, 07h, 07h, 07h, 00h, 07h, 07h, 07h, 07h, 0fh, 00h, 07h, 07h, 00h
+tiny_clover db 0fh, 00h, 0fh, 00h, 07h, 00h, 0fh, 00h, 0fh
+star db 00h, 00h, 0fh, 0fh, 0fh, 00h, 07h, 00h, 00h, 0fh, 0fh, 00h, 07h, 07h, 00h, 0fh, 00h, 07h, 07h, 07h, 0fh, 0fh, 00h, 07h, 00h
+tiny_star db 00h, 00h, 0fh, 00h, 07h, 00h, 0fh, 00h, 0fh
 
 CODESEG	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
