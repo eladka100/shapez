@@ -219,6 +219,10 @@ proc put_brick
 	ret
 endp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc put_corner
+	
+	ret
+endp
 proc show_tile
 	push si
 	push ax
