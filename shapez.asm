@@ -8,6 +8,8 @@ Y dw 0000h
 mouseX db 00h
 mouseY db 00h
 mouseP db 00h
+key db 00h
+key_ascii db 00h
 bricks dw offset pipe1, offset pipe2, offset rotator, offset trash, offset cutter, offset shuffler, offset painter, offset stacker
 brick db 00h
 empty db 08h
@@ -28,7 +30,7 @@ inout_pipe1 db 10110b, 10110b, 11100b, 11100b, 00010b, 00010b, 01000b, 01000b
 inout_pipe2 db 01110b, 00110b, 01100b, 00100b, 11010b, 10010b, 11000b, 10000b
 inout_func dw offset strait, offset turned, offset strait, offset EX, offset only_output, offset strait, offset only_input, offset only_input
 
-board dw 500 dup(0040h)
+board dw 499 dup(0040h)
 
 CODESEG	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -69,6 +71,28 @@ proc read_mouse
 	MOV ax, 3h
 	INT 33h
 	shr cx, 1
+	pop ax
+	ret
+endp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc read_keyboard
+	push ax
+	mov ax, 0100h
+	int 16h
+	jz no_key_prsd
+	mov ah, 0
+	int 16h
+	mov [key], ah
+	mov [key_ascii], al
+	jmp finish_keyboard_reading
+	no_key_prsd:
+	mov [key], 0
+	mov [key_ascii], 0
+	finish_keyboard_reading:
+	mov al, [key]
+	mov cx, 0
+	mov dx, 0
+	call paint_pixel
 	pop ax
 	ret
 endp
@@ -322,9 +346,25 @@ proc mousing
 		mov [Y], dx
 		call put_brick
 	
+	cmp [mouseP], 0h
+	je finish_mousing
+	mov bl, [mouseX]
+	mov bh, [mouseY]
 	cmp [mouseP], 1h
-	jne finish_mousing
-	call save_tile
+	je left_click
+	cmp [mouseP], 2h
+	je right_click
+	
+	left_click:
+		call check_empty
+		jnz finish_mousing
+		call save_tile
+		jmp finish_mousing
+	
+	right_click:
+		call delete
+		jmp finish_mousing
+	
 	finish_mousing:
 	pop [Y]
 	pop [X]
@@ -340,30 +380,29 @@ proc choose_brick
 	push ax
 	push cx
 	push dx
-	mov ax, 0100h
-	int 16h
-	jz change_brick_help
-	mov ah, 0
-	int 16h
-	cmp ah, 0ah
+	call read_keyboard
+	cmp [key], 0
+	je change_brick_help
+	cmp [key], 0ah
 	jb change_brick
-	cmp ah, 13h
+	cmp [key], 13h
 	je change_rotation
-	cmp ah, 21h
+	cmp [key], 21h
 	je flip
 	jmp finish_brick_choosing
 	
 	change_brick:
+		mov ah, [key]
 		sub ah, 2h
 		and [brick], 11111000b
 		add [brick], ah
 	
 	change_rotation:
-		mov ah, [brick]
-		shr ah, 3
-		cmp al, 72h
+		mov al, [brick]
+		shr al, 3
+		cmp [key_ascii], 72h
 		je clockwise
-		cmp al, 52h
+		cmp [key_ascii], 52h
 		je counter_clockwise
 		jmp finish_brick_choosing
 		
@@ -376,7 +415,6 @@ proc choose_brick
 		rotate:
 			cmp [mouseY], 19
 			je finish_brick_choosing
-			mov al, ah
 			mov ah, 0
 			add si, ax
 			mov ah, [si]
@@ -574,9 +612,7 @@ proc check_empty
 	push bx
 	push cx
 	mov ch, 0
-	mov bl, [mouseX]
-	mov bh, [mouseY]
-	
+
 	check_selected:
 		call access_board
 		mov ax, [si]
@@ -620,11 +656,8 @@ proc save_tile
 	push bx
 	push cx
 	push dx
-	mov bl, [mouseX]
-	mov bh, [mouseY]
+	push si
 	mov al, [brick]
-	call check_empty
-	jnz finish_saving_help
 	
 	size_saving:
 		and al, 111b
@@ -751,8 +784,25 @@ proc save_tile
 
 	
 	finish_saving:
+	pop si
 	pop dx
 	pop cx
+	pop bx
+	pop ax
+	ret
+endp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc delete
+	push ax
+	push bx
+	push si
+	call access_main
+	mov ax, [si]
+	or al, 1000000b
+	xchg al, [brick]
+	call save_tile
+	mov [brick], al
+	pop si
 	pop bx
 	pop ax
 	ret
@@ -766,7 +816,7 @@ start:
 	forever:
 		call mousing
 		call choose_brick
-		cmp [mouseP], 2h
+		cmp [key], 39h
 		jne forever
 	call enter_text_mode
 exit:
