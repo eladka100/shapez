@@ -33,12 +33,15 @@ inout_func dw offset strait, offset turned, offset strait, offset EX, offset onl
 board dw 500 dup(0040h)
 dynamic_board db 1500 dup(00h)
 
+noth db 34 dup (0fh)
 squere db 00h, 00h, 00h, 00h, 00h, 00h, 07h, 07h, 07h, 07h, 00h, 07h, 07h, 07h, 07h, 00h, 07h, 07h, 07h, 07h,  00h, 07h, 07h, 07h, 00h
-tiny_squere db 00h, 00h, 00h, 00h, 07h, 07h, 00h, 07h, 07h
+db 00h, 00h, 00h, 00h, 07h, 07h, 00h, 07h, 07h
 clover db 0fh, 00h, 00h, 00h, 0fh, 00h, 07h, 07h, 07h, 00h, 00h, 07h, 07h, 07h, 07h, 00h, 07h, 07h, 07h, 07h, 0fh, 00h, 07h, 07h, 00h
-tiny_clover db 0fh, 00h, 0fh, 00h, 07h, 00h, 0fh, 00h, 0fh
+db 0fh, 00h, 0fh, 00h, 07h, 00h, 0fh, 00h, 0fh
 star db 00h, 00h, 0fh, 0fh, 0fh, 00h, 07h, 00h, 00h, 0fh, 0fh, 00h, 07h, 07h, 00h, 0fh, 00h, 07h, 07h, 07h, 0fh, 0fh, 00h, 07h, 00h
-tiny_star db 00h, 00h, 0fh, 00h, 07h, 00h, 0fh, 00h, 0fh
+db 00h, 00h, 0fh, 00h, 07h, 00h, 0fh, 00h, 0fh
+
+
 
 
 CODESEG	
@@ -111,6 +114,8 @@ proc paint_pixel
 	push bx
 	push cx
 	push dx
+	mov cx, [X]
+	mov dx, [Y]
 	mov ah, 0ch
 	int 10h
 	pop dx
@@ -122,24 +127,28 @@ endp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 proc backround
 	push ax
-	push cx
-	push dx
-	mov cx, 0
-	mov dx, 0
+	push bx
+	mov bx, [X]
+	push bx
+	mov bx, [Y]
+	push bx
+	mov [X], 0
+	mov [Y], 0
 	mov al, 08h
 	
 	backround_loop:
 			call paint_pixel
-			add cx, 1
-			cmp cx, 320
+			inc [X]
+			cmp [X], 320
 			jne backround_loop
-		mov cx, 0
-		add dx, 1
-		cmp dx, 200
+		mov [X], 0
+		inc [Y]
+		cmp [Y], 200
 	jne backround_loop
 	
-	pop dx
-	pop cx
+	pop [Y]
+	pop [X]
+	pop bx
 	pop ax
 	ret
 endp
@@ -244,10 +253,28 @@ proc put_brick
 	ret
 endp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-proc put_corner
-	
+proc put_shape
+	push ax
+	push bx
+	push cx
+	push dx
+	push si
+	push di
+	mov bl, 0
+	mov cx, 101h
+	mov di, 0
+	corner_loop:
+		
+
+	pop di
+	pop si
+	pop dx
+	pop cx
+	pop bx
+	pop ax
 	ret
 endp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 proc show_tile
 	push si
 	push ax
