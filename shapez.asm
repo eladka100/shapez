@@ -41,6 +41,10 @@ db 0fh, 00h, 0fh, 00h, 07h, 00h, 0fh, 00h, 0fh
 star db 00h, 00h, 0fh, 0fh, 0fh, 00h, 07h, 00h, 00h, 0fh, 0fh, 00h, 07h, 07h, 00h, 0fh, 00h, 07h, 07h, 07h, 0fh, 0fh, 00h, 07h, 00h
 db 00h, 00h, 0fh, 00h, 07h, 00h, 0fh, 00h, 0fh
 
+im_funcs1 dw offset reg_func1, 0000h
+im_funcs2 dw offset reg_func2, 0000h
+im_funcs3 dw 0000h
+
 
 
 
@@ -101,10 +105,6 @@ proc read_keyboard
 	mov [key], 0
 	mov [key_ascii], 0
 	finish_keyboard_reading:
-	mov al, [key]
-	mov cx, 0
-	mov dx, 0
-	call paint_pixel
 	pop ax
 	ret
 endp
@@ -153,25 +153,90 @@ proc backround
 	ret
 endp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc commit_funcs
+	push di
+	push ax
+	func_loop:
+		mov ax, [di]
+		cmp ax, 0000h
+		je finish_commiting
+		call ax
+		inc di
+		inc di
+		jmp func_loop
+	finish_commiting:
+	pop ax
+	pop di
+	ret
+endp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc paint_image
+	push si
+	push di
+	push ax
+	mov ax, [X]
+	push ax
+	mov ax, [Y]
+	push ax
+	push bx
+	push cx
+	push bp
+	mov bp, sp
+	add bp, 18
+	mov di, [bp]
+	call commit_funcs
+	mov di, [bp+2]
+	
+	mov cx, 0
+	paint_loop:
+			mov al, [si]
+			call paint_pixel
+			inc si
+			call commit_funcs
+			inc cl
+			cmp cl, bl
+			jne paint_loop
+		push di
+		mov di, [bp+4]
+		call commit_funcs
+		pop di
+		inc ch
+		mov cl, 0
+		cmp ch, bh
+		jne paint_loop
+	
+	pop bp
+	pop cx
+	pop bx
+	pop [Y]
+	pop [X]
+	pop ax
+	pop di
+	pop si
+	ret
+endp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 proc put_brick
 	push si
 	push di
 	push ax
-	push bx
 	push cx
-	push dx
+	push bx
+	mov bx, [X]
+	push bx
+	mov bx, [Y]
+	push bx
 	
 	mov ax, 0
-	mov cx, 0
-	mov dx, 0
+	mov cx, 101h
 	
 	mov al, [brick]
-	push ax
-	and al, 7h
-	cmp al, 4h
+	test al, 4h
 	
-	jb square1
-	jmp square2
+	jz square1
+	jnz square2
+	
+	switch:
 	
 	square1:
 		mov bl, 10
@@ -181,47 +246,39 @@ proc put_brick
 		jmp read
 	
 	read:
-		mov si, offset bricks
-		mov bh, 2h
-		mul bh
-		add si, ax
-		mov di, [si]
-		pop ax
-		mov ah,al
-		mov bh, 0
-		and al, 40h
-		cmp al, 40h
-		je grey
-		jne brick_loop
+		mov di, offset bricks
+		shl al, 1
+		add di, ax
+		shr al, 1
+		mov si, [di]
+		mov di, offset X
+		test al, 40h
+		jnz grey
 	
+	horizontal:
+		test al, 8h
+		jz vertical
+		neg cl
+		add cx, bx
+		sub cx, 1
+	vertical:
+		mov al, ah
+		and al, 10h
+		cmp al, 10h
+		jne diagonal
+		neg dx
+		add dx, 9
+	diagonal:
+		mov al, ah
+		and al, 20h
+		cmp al, 20h
+		jne brick_paint
+		push cx
+		mov cx, dx
+		pop dx	
 	grey:
 		mov di, offset empty
 	brick_loop:
-			horizontal:
-				push dx
-				push cx
-				mov al, ah
-				and al, 8h
-				cmp al, 8h
-				jne vertical
-				neg cx
-				add cx, bx
-				sub cx, 1
-			vertical:
-				mov al, ah
-				and al, 10h
-				cmp al, 10h
-				jne diagonal
-				neg dx
-				add dx, 9
-			diagonal:
-				mov al, ah
-				and al, 20h
-				cmp al, 20h
-				jne brick_paint
-				push cx
-				mov cx, dx
-				pop dx
 			brick_paint:
 				push ax
 				add cx, [X]
@@ -244,9 +301,10 @@ proc put_brick
 		add dx, 1
 		cmp dx, 10
 		jne brick_loop
-	pop dx
-	pop cx
+	pop [Y]
+	pop [X]
 	pop bx
+	pop cx
 	pop ax
 	pop di
 	pop si
@@ -848,18 +906,50 @@ proc delete
 	ret
 endp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+reg_func2:
+	inc [X]
+	ret
+reg_func1:
+	push bx
+	inc [Y]
+	mov bh, 0
+	sub [X], bx
+	pop bx
+	ret
 start:
 	mov ax, @data
 	mov ds, ax
 	call enter_graphic_mode
-	call backround
+	mov [X], 0
+	mov [Y], 0
+	push offset im_funcs1
+	push offset im_funcs2
+	push offset im_funcs3
+	mov si, offset pipe1
+	mov bl, 10
+	mov bh, 10
+	paint_pipes:
+		call paint_image
+		add [X], 10
+		cmp [X], 320
+		jne paint_pipes
+		mov [X], 0
+		add [Y], 10
+		cmp [Y], 200
+		jne paint_pipes
+	mov si, offset trash
+	mov [X], 50
+	mov [Y], 50
+	call paint_image
+	mov [Y], 10
+	mov [X], 10
+	call paint_image
 	forever:
-		call mousing
-		call choose_brick
-		cmp [key], 39h
+		call read_keyboard
+		cmp [key], 0Eh
 		jne forever
-	call enter_text_mode
 exit:
+	call enter_text_mode
 	mov ax, 4c00h
 	int 21h
 END start
