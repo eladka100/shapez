@@ -13,6 +13,8 @@ key_ascii db 00h
 bricks dw offset pipe1, offset pipe2, offset rotator, offset trash, offset cutter, offset shuffler, offset painter, offset stacker
 brick db 00h
 empty db 08h
+brick_func1 dw 3 dup(0000h)
+brick_func2 dw 3 dup(0000h)
 
 pipe1 db 07h, 07h, 0fh, 0fh, 07h, 07h, 0fh, 0fh, 07h, 07h, 07h, 07h, 0fh, 07h, 07h, 07h, 07h, 0fh, 07h, 07h, 07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 07h, 07h, 07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 07h, 07h, 07h, 07h, 0fh, 0fh, 07h, 07h, 0fh, 0fh, 07h, 07h, 07h, 07h, 0fh, 07h, 07h, 07h, 07h, 0fh, 07h, 07h, 07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 07h, 07h, 07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 07h, 07h, 07h, 07h, 0fh, 0fh, 07h, 07h, 0fh, 0fh, 07h, 07h, 07h, 07h, 0fh, 07h, 07h, 07h, 07h, 0fh, 07h, 07h
 pipe2 db 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 07h, 0fh, 07h, 07h, 0fh, 0fh, 07h, 07h, 07h, 0fh, 07h, 07h, 07h, 07h, 0fh, 0fh, 0fh, 07h, 07h, 0fh, 07h, 07h,07h, 07h, 0fh, 0fh, 0fh, 0fh, 07h, 0fh, 07h, 0fh, 07h, 07h, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 0fh, 07h, 07h, 0fh, 0fh, 07h, 07h, 0fh, 0fh, 07h, 07h, 07h, 07h, 0fh, 07h, 07h, 07h, 07h, 0fh, 07h, 07h
@@ -174,18 +176,14 @@ proc paint_image
 	push si
 	push di
 	push ax
-	mov ax, [X]
-	push ax
-	mov ax, [Y]
-	push ax
+	push [X]
+	push [Y]
 	push bx
 	push cx
 	push bp
 	mov bp, sp
 	add bp, 18
 	mov di, [bp]
-	call commit_funcs
-	mov di, [bp+2]
 	
 	mov cx, 0
 	paint_loop:
@@ -197,7 +195,7 @@ proc paint_image
 			cmp cl, bl
 			jne paint_loop
 		push di
-		mov di, [bp+4]
+		mov di, [bp+2]
 		call commit_funcs
 		pop di
 		inc ch
@@ -216,98 +214,171 @@ proc paint_image
 	ret
 endp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc X1
+	push dx
+	mov dh, 0h
+	shl dl, 1
+	and dl, 2h
+	inc [X]
+	sub [X], dx
+	pop dx
+	ret
+endp
+proc X2
+	push ax
+	push dx
+	mov dh, 0
+	and dl, 2h
+	inc [X]
+	sub [X], dx
+	mov al, bl
+	mov ah, 0
+	sub [Y], ax
+	pop dx
+	mov ah, dl
+	shl ah, 1
+	and ah, 2h
+	mul ah
+	add [Y], ax
+	pop ax
+	ret
+endp
+proc Y1
+	push dx
+	mov dh, 0h
+	shl dl, 1
+	and dl, 2h
+	inc [Y]
+	sub [Y], dx
+	pop dx
+	ret
+endp
+proc Y2
+	push ax
+	push dx
+	mov dh, 0
+	and dl, 2h
+	inc [Y]
+	sub [Y], dx
+	mov al, bl
+	mov ah, 0
+	sub [X], ax
+	pop dx
+	mov ah, dl
+	shl ah, 1
+	and ah, 2h
+	mul ah
+	add [X], ax
+	pop ax
+	ret
+endp
+proc same
+	dec si
+	ret
+endp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc det_flip
+	push ax
+	mov ah, 0
+	horizontal:
+		test dl, 1h
+		jz vertical
+		mov al, bl
+		add [X], ax
+		dec [X]
+		
+	vertical:
+		test dl, 2h
+		jz finish_det
+		mov al, bh
+		add [Y], ax
+		dec [Y]
+	
+	finish_det:
+	pop ax
+	ret
+endp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 proc put_brick
+	push ax
+	push [X]
+	push [Y]
+	push bx
+	push cx
+	push dx
 	push si
 	push di
-	push ax
-	push cx
-	push bx
-	mov bx, [X]
-	push bx
-	mov bx, [Y]
-	push bx
-	
-	mov ax, 0
-	mov cx, 101h
-	
 	mov al, [brick]
+	and ax, 111b
+	shl ax, 1
+	mov di, offset bricks
+	add di, ax
+	mov si, [di]
+	mov al, [brick]
+	mov dl, al
+	shr dl, 3
+	and dl, 3h
+	mov bh, 10
+	mov ch, 0
+	mov dx, 0000h
 	test al, 4h
-	
-	jz square1
-	jnz square2
-	
-	switch:
-	
-	square1:
+	jz size1
+	jmp size2
+	size1:
 		mov bl, 10
-		jmp read
-	square2:
+		jmp check_grey
+	size2:
 		mov bl, 20
-		jmp read
+		jmp check_grey
 	
-	read:
-		mov di, offset bricks
-		shl al, 1
-		add di, ax
-		shr al, 1
-		mov si, [di]
-		mov di, offset X
+	check_grey:
 		test al, 40h
-		jnz grey
+		jz gn
+		jmp gy
+		gn:
+			mov [brick_func1+2], 0000h
+			jmp diagonal
+		gy:
+			mov [brick_func1+2], offset same
+			mov si, offset empty
+			jmp diagonal
 	
-	horizontal:
-		test al, 8h
-		jz vertical
-		neg cl
-		add cx, bx
-		sub cx, 1
-	vertical:
-		mov al, ah
-		and al, 10h
-		cmp al, 10h
-		jne diagonal
-		neg dx
-		add dx, 9
 	diagonal:
-		mov al, ah
-		and al, 20h
-		cmp al, 20h
-		jne brick_paint
-		push cx
-		mov cx, dx
-		pop dx	
-	grey:
-		mov di, offset empty
-	brick_loop:
-			brick_paint:
-				push ax
-				add cx, [X]
-				add dx, [Y]
-				mov al, [di]
-				call paint_pixel
-				cmp al, 08h
-			pop ax
-			pop cx
-			pop dx
-			
-			je next
-			add di, 1
-			
-			next:
-				add cx, 1
-				cmp cx, bx
-				jne brick_loop
-		mov cx, 0
-		add dx, 1
-		cmp dx, 10
-		jne brick_loop
-	pop [Y]
-	pop [X]
-	pop bx
-	pop cx
-	pop ax
+		push dx
+		push bx
+		test al, 20h
+		jz dn
+		xchg bl, bh
+		shr dl, 1
+		jnc dy
+		or dl, 2h
+		dy:
+			mov [brick_func2], offset X2
+			mov [brick_func1], offset Y1
+			jmp paint_brick
+		dn:
+			mov [brick_func2], offset Y2
+			mov [brick_func1], offset X1
+
+	
+	paint_brick:
+		call det_flip
+		pop bx
+		pop dx
+		push offset brick_func2
+		push offset brick_func1
+		call paint_image
+		pop ax
+		pop ax
+	
 	pop di
 	pop si
+	pop dx
+	pop cx
+	pop bx
+	pop [Y]
+	pop [X]
+	pop ax
 	ret
 endp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -411,7 +482,7 @@ proc mousing
 			add [mouseX], 1h
 			
 		right_tile:
-			cmp [mouseX], 31
+			cmp [mouseX], 24
 			je top_tile
 			add [mouseX], 1h
 			call show_tile
@@ -919,31 +990,9 @@ reg_func1:
 start:
 	mov ax, @data
 	mov ds, ax
+	mov [brick], 00h
 	call enter_graphic_mode
-	mov [X], 0
-	mov [Y], 0
-	push offset im_funcs1
-	push offset im_funcs2
-	push offset im_funcs3
-	mov si, offset pipe1
-	mov bl, 10
-	mov bh, 10
-	paint_pipes:
-		call paint_image
-		add [X], 10
-		cmp [X], 320
-		jne paint_pipes
-		mov [X], 0
-		add [Y], 10
-		cmp [Y], 200
-		jne paint_pipes
-	mov si, offset trash
-	mov [X], 50
-	mov [Y], 50
-	call paint_image
-	mov [Y], 10
-	mov [X], 10
-	call paint_image
+	call put_brick
 	forever:
 		call read_keyboard
 		cmp [key], 0Eh
