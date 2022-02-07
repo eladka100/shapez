@@ -3,6 +3,7 @@ MODEL small
 STACK 100h
 DATASEG
 
+do_nothing dw 0000h
 X dw 0000h
 Y dw 0000h
 mouseX db 00h
@@ -12,7 +13,7 @@ key db 00h
 key_ascii db 00h
 bricks dw offset pipe1, offset pipe2, offset rotator, offset trash, offset cutter, offset shuffler, offset painter, offset stacker
 brick db 00h
-empty db 08h
+empty db 82
 brick_func1 dw 3 dup(0000h)
 brick_func2 dw 3 dup(0000h)
 
@@ -43,10 +44,11 @@ db 0fh, 00h, 0fh, 00h, 07h, 00h, 0fh, 00h, 0fh
 star db 00h, 00h, 0fh, 0fh, 0fh, 00h, 07h, 00h, 00h, 0fh, 0fh, 00h, 07h, 07h, 00h, 0fh, 00h, 07h, 07h, 07h, 0fh, 0fh, 00h, 07h, 00h
 db 00h, 00h, 0fh, 00h, 07h, 00h, 0fh, 00h, 0fh
 
-im_funcs1 dw offset reg_func1, 0000h
-im_funcs2 dw offset reg_func2, 0000h
-im_funcs3 dw 0000h
-
+shapes dw offset noth, offset squere, offset clover, offset star
+tiny_shapes dw offset noth + 25, offset squere + 25, offset clover + 25, offset star + 25
+shape_funcs1 dw offset X1, 0000h
+shape_funcs2 dw offset Y2, 0000h
+shape_funcs3 dw offset transparent, 2 dup(0000h)
 
 
 
@@ -111,6 +113,20 @@ proc read_keyboard
 	ret
 endp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc read_pixel
+	push bx
+	push cx
+	push dx
+	mov dx, [Y]
+	mov cx, [X]
+	mov bx, 0
+	mov ah, 0dh
+	int 10h
+	pop dx
+	pop cx
+	pop bx
+endp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 proc paint_pixel
 	push ax
 	push bx
@@ -136,7 +152,7 @@ proc backround
 	push bx
 	mov [X], 0
 	mov [Y], 0
-	mov al, 08h
+	mov al, 82
 	
 	backround_loop:
 			call paint_pixel
@@ -157,17 +173,18 @@ endp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 proc commit_funcs
 	push di
-	push ax
 	func_loop:
-		mov ax, [di]
-		cmp ax, 0000h
+		push di
+		mov di, [di]
+		cmp di, 0000h
 		je finish_commiting
-		call ax
+		call di
+		pop di
 		inc di
 		inc di
 		jmp func_loop
 	finish_commiting:
-	pop ax
+	pop di
 	pop di
 	ret
 endp
@@ -188,6 +205,10 @@ proc paint_image
 	mov cx, 0
 	paint_loop:
 			mov al, [si]
+			push di
+			mov di, [bp+4]
+			call commit_funcs
+			pop di
 			call paint_pixel
 			inc si
 			call commit_funcs
@@ -365,9 +386,11 @@ proc put_brick
 		call det_flip
 		pop bx
 		pop dx
+		push offset do_nothing
 		push offset brick_func2
 		push offset brick_func1
 		call paint_image
+		pop ax
 		pop ax
 		pop ax
 	
@@ -382,25 +405,107 @@ proc put_brick
 	ret
 endp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc transparent
+	cmp al, dh
+	jne finish_transparent
+	call read_pixel
+	finish_transparent:
+	ret
+endp
+proc white_shape
+	cmp al, 07h
+	jne dont_paint
+	mov al, 0fh
+	dont_paint:
+	ret
+endp
+proc blank_func
+	ret
+endp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 proc put_shape
+	push [X]
+	push [Y]
 	push ax
 	push bx
 	push cx
 	push dx
 	push si
 	push di
-	mov bl, 0
-	mov cx, 101h
-	mov di, 0
-	corner_loop:
-		
-
+	push bp
+	mov bp, sp
+	add bp, 20
+	mov cx, [bp]
+	mov bx, 505h
+	mov dx, 0f00h
+	mov ax, offset shape_funcs3
+	push ax
+	mov ax, offset shape_funcs2
+	push ax
+	mov ax, offset shape_funcs1
+	push ax
+	mov ax, offset shapes
+	
+	shape_loop:
+			test cl, 100b
+			mov [shape_funcs3+2], offset white_shape
+			jnz paint_corner
+			mov [shape_funcs3+2], 0000h
+			paint_corner:
+				mov di, 11b
+				and di, cx
+				shl di, 1
+				add di, ax
+				mov si, [di]
+				call paint_image
+			inc dl
+			shr cx, 3
+			push bx
+			mov bh, 0
+			shl bl, 1
+			add [X], bx
+			dec [X]
+			pop bx
+			test dl, 1b
+			jnz shape_loop
+		push bx
+		mov bh, 0
+		shl bl, 1
+		add [Y], bx
+		dec [Y]
+		shl bl, 1
+		sub [X], bx
+		add [X], 2
+		pop bx
+		test dl, 10b
+		jnz shape_loop
+	cmp bl, 3
+	je finish_shape_painting
+	mov bh, 0
+	shl bl, 2
+	sub [Y], bx
+	add [Y], 4
+	add [X], 2
+	mov bx, 303h
+	mov dl, 0
+	add bp, 2
+	mov cx, [bp]
+	mov ax, offset tiny_shapes
+	jmp shape_loop
+	
+	finish_shape_painting:
+	pop ax
+	pop ax
+	pop ax
+	pop bp
 	pop di
 	pop si
 	pop dx
 	pop cx
 	pop bx
 	pop ax
+	pop [Y]
+	pop [X]
 	ret
 endp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -990,13 +1095,20 @@ reg_func1:
 start:
 	mov ax, @data
 	mov ds, ax
-	mov [brick], 00h
 	call enter_graphic_mode
-	call put_brick
-	forever:
-		call read_keyboard
-		cmp [key], 0Eh
-		jne forever
+	call backround
+	mov [X], 50
+	mov [Y], 50
+	mov ax, b
+	push ax
+	push ax
+	call put_shape
+	pop ax
+	pop ax
+forever:
+	call read_keyboard
+	cmp [key], 0Eh
+	jne forever
 exit:
 	call enter_text_mode
 	mov ax, 4c00h
