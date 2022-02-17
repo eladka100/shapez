@@ -6,6 +6,8 @@ DATASEG
 do_nothing dw 0000h
 X dw 0000h
 Y dw 0000h
+top db 00h
+left db 00h
 mouseX db 00h
 mouseY db 00h
 mouseP db 00h
@@ -33,8 +35,8 @@ inout_pipe1 db 10110b, 10110b, 11100b, 11100b, 00010b, 00010b, 01000b, 01000b
 inout_pipe2 db 01110b, 00110b, 01100b, 00100b, 11010b, 10010b, 11000b, 10000b
 inout_func dw offset strait, offset turned, offset strait, offset EX, offset only_output, offset strait, offset only_input, offset only_input
 
-board dw 500 dup(0040h)
-dynamic_board db 1500 dup(00h)
+board dw 2000 dup(0040h)
+dynamic_board dw 8000 dup(0000h)
 
 noth db 34 dup (0fh)
 squere db 00h, 00h, 00h, 00h, 00h, 00h, 07h, 07h, 07h, 07h, 00h, 07h, 07h, 07h, 07h, 00h, 07h, 07h, 07h, 07h,  00h, 07h, 07h, 07h, 00h
@@ -341,7 +343,7 @@ proc put_brick
 	and dl, 3h
 	mov bh, 10
 	mov ch, 0
-	mov dx, 0000h
+	mov dh, 00h
 	test al, 4h
 	jz size1
 	jmp size2
@@ -654,7 +656,6 @@ proc choose_brick
 	push ax
 	push cx
 	push dx
-	call read_keyboard
 	cmp [key], 0
 	je change_brick_help
 	cmp [key], 0ah
@@ -670,6 +671,7 @@ proc choose_brick
 		sub ah, 2h
 		and [brick], 11111000b
 		add [brick], ah
+		jmp finish_brick_choosing
 	
 	change_rotation:
 		mov al, [brick]
@@ -705,17 +707,12 @@ proc choose_brick
 	
 	
 	finish_brick_choosing:
-		inc [mouseX]
-		call show_tile
-		dec [mouseX]
-		inc [mouseY]
-		call show_tile
-		dec [mouseY]
 		mov al, [brick]
 		and al, 100b
 		mov ah, [brick]
 		and ah, 100000b
 		shr ah, 3
+		push ax
 		and al, ah
 		shr al, 2
 		mov cl, 10
@@ -723,15 +720,28 @@ proc choose_brick
 		mov dx, 199
 		sub dl, al
 		mov cx, 0
-		push ax
 		mov ax, 8
 		int 33h
 		pop ax
-		mov dx, 239
+		xor ah, 100b
+		and al, ah
+		shr al, 2
+		mov cl, 10
+		mul cl
+		mov dx, 249
+		sub dl, al
 		shl dx, 1
-		add dl, al
 		mov ax, 7
 		int 33h
+		call mousing
+		test [brick], 100b
+		jz nothing_changed
+		inc [mouseX]
+		call show_tile
+		dec [mouseX]
+		inc [mouseY]
+		call show_tile
+		dec [mouseY]
 	nothing_changed:
 		pop dx
 		pop cx
@@ -744,6 +754,8 @@ proc access_board
 	push bx
 	push cx
 	
+	add bl, [left]
+	add bh, [top]
 	mov si, offset board
 	mov ah, 0
 	mov al, bl
@@ -751,7 +763,7 @@ proc access_board
 	add si, ax
 	mov ah, 0
 	mov al, bh
-	mov cl, 50
+	mov cl, 100
 	mul cl
 	add si, ax
 	
@@ -816,6 +828,17 @@ proc access_inout
 	finish_inputing:
 		call access_board
 	
+	pop ax
+	ret
+endp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc access_dynamic
+	push ax
+	mov ax, offset board
+	sub si, ax
+	shl si, 3
+	mov ax, offset dynamic_board
+	add si, ax
 	pop ax
 	ret
 endp
@@ -1072,41 +1095,117 @@ proc delete
 	push si
 	call access_main
 	mov ax, [si]
-	or al, 1000000b
-	xchg al, [brick]
+	mov ah, [brick]
+	mov [brick], 1000000b
+	test al, 100b
+	jz finish_deleting
 	call save_tile
-	mov [brick], al
+	test al, 100000b
+	jz delete_side
+	
+	delete_below:
+		inc bh
+		jmp finish_deleting
+	delete_side:
+		inc bl
+	
+	finish_deleting:
+	call save_tile
+	mov [brick], ah
 	pop si
 	pop bx
 	pop ax
 	ret
 endp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-reg_func2:
-	inc [X]
-	ret
-reg_func1:
+proc paint_backround
+	push [X]
+	push [Y]
+	push si
 	push bx
-	inc [Y]
+	push ax
+	mov al, [brick]
+	push ax
 	mov bh, 0
-	sub [X], bx
+	mov bl, 0
+	paint_backround_loop:
+			call access_board
+			mov ax, [si]
+			test ah, 1h
+			jnz same_brick
+			mov [brick], al
+			call put_brick
+			same_brick:
+			inc bl
+			add [X], 10
+			cmp bl, 25
+			jne paint_backround_loop
+		mov bl, 0
+		mov [X], 0
+		inc bh
+		add [Y], 10
+		cmp bh, 20
+		jne paint_backround_loop
+	pop ax
+	mov [brick], al
+	pop ax
 	pop bx
+	pop si
+	pop [Y]
+	pop [X]
 	ret
+endp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc move_board
+	cmp [key], 50h
+	je inc_top
+	cmp [key], 4bh
+	je dec_left
+	cmp [key], 4dh
+	je inc_left
+	cmp [key], 48h
+	je dec_top
+	ret
+	
+	inc_top:
+		cmp [top], 20
+		je finish_board_moving
+		inc [top]
+		jmp finish_board_moving
+	
+	inc_left:
+		cmp [left], 25
+		je finish_board_moving
+		inc [left]
+		jmp finish_board_moving
+	
+	dec_top:
+		cmp [top], 0
+		je finish_board_moving
+		dec [top]
+		jmp finish_board_moving
+	
+	dec_left:
+		cmp [left], 0
+		je finish_board_moving
+		dec [left]
+		jmp finish_board_moving
+	
+	finish_board_moving:
+	call paint_backround
+	ret
+endp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 start:
 	mov ax, @data
 	mov ds, ax
 	call enter_graphic_mode
-	call backround
-	mov [X], 50
-	mov [Y], 50
-	mov ax, b
-	push ax
-	push ax
-	call put_shape
-	pop ax
-	pop ax
+	call paint_backround
 forever:
 	call read_keyboard
+	call choose_brick
+	call move_board
+	call mousing
 	cmp [key], 0Eh
 	jne forever
 exit:
