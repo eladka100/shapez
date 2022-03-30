@@ -1407,8 +1407,8 @@ proc step
 			call check_merge
 			jnz stack_on
 			or dx, ax
-			mov [si+4], dx
-			mov [si+6], cx
+			mov [si+6], dx
+			mov [si+4], cx
 			jmp dont_merge
 			
 			stack_on:
